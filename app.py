@@ -62,7 +62,7 @@ st.markdown("""
         }
     }
     </style>
-""", unsafe_with_html=True)
+""", unsafe_allow_html=True)
 
 st.title("👕 Precificação Rápida")
 st.caption("Moda Masculina • Versão Mobile")
