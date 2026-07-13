@@ -71,8 +71,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("👕 Precificação Rápida")
-
 # --- ENTRADA DE DADOS ---
 
 # 1. Custos de Aquisição (3 colunas lado a lado)
