@@ -1,4 +1,5 @@
 import streamlit as st
+import math
 
 # Configuração da página otimizada para mobile
 st.set_page_config(
@@ -68,16 +69,14 @@ st.title("👕 Precificação Rápida")
 st.caption("Moda Masculina • Versão Mobile")
 
 # --- ENTRADA DE DADOS ---
-# Custos de aquisição física + quantidade integrados no topo
 st.subheader("Custos de Aquisição")
 col1, col2 = st.columns(2)
 with col1:
     custo_fornecedor = st.number_input("Fornecedor (R$)", min_value=0.0, value=45.00, step=1.0)
-    qtd_estoque = st.number_input("Qtd de Peças", min_value=0, value=10, step=5)
+    qtd_estoque = st.number_input("Qtd de Peças", min_value=1, value=10, step=5)
 with col2:
     custo_frete = st.number_input("Frete/Peça (R$)", min_value=0.0, value=3.50, step=0.5)
 
-# Embalagem, custos operacionais e tributos
 st.subheader("Taxas e Deduções")
 col3, col4 = st.columns(2)
 with col3:
@@ -115,12 +114,21 @@ margem_lucro_real_pct = (lucro_liquido_real / preco_praticado) * 100 if preco_pr
 # 5. Markup Aplicado
 markup_aplicado = preco_praticado / custo_total_real if custo_total_real > 0 else 0
 
-# 6. NOVO: Cálculos de Estoque Alterados conforme solicitação
+# 6. Estoque & Lote
 capital_investido_fornecedor = custo_fornecedor * qtd_estoque
-# Nova regra matemática: (Fornecedor + Frete) * Quantidade
 custo_total_lote = (custo_fornecedor + custo_frete) * qtd_estoque
 faturamento_potencial = preco_praticado * qtd_estoque
 lucro_total_lote = lucro_liquido_real * qtd_estoque
+
+# 7. NOVO: Cálculo de Ponto de Equilíbrio (Break-even)
+# Quanto sobra de dinheiro em caixa após deduzir as taxas e a embalagem da venda
+receita_liquida_un = preco_praticado * (1 - soma_taxas_variaveis) - custo_embalagem
+
+if receita_liquida_un > 0:
+    # Divisão do custo de compra do lote pelo retorno real da venda
+    pecas_break_even = math.ceil(custo_total_lote / receita_liquida_un)
+else:
+    pecas_break_even = 0
 
 
 # --- EXIBIÇÃO DOS RESULTADOS ---
@@ -158,14 +166,32 @@ if markup_aplicado < 2.0:
 else:
     st.success(f"✅ **Saudável:** Markup de {markup_aplicado:.2f}x está excelente para o varejo.")
 
-# --- CARD VISUAL DO LOTE (Métricas de Estoque) ---
+# --- CARD VISUAL DO LOTE ---
 if qtd_estoque > 0:
     st.subheader("📊 Projeção do Lote Inteiro")
     
     col_est1, col_est2 = st.columns(2)
     with col_est1:
-        st.metric(label="Investimento Fornecedor", value=f"R$ {capital_investido_fornecedor:.2f}")
         st.metric(label="Custo Direto do Lote", value=f"R$ {custo_total_lote:.2f}")
+        st.metric(label="Lucro Líquido do Lote", value=f"R$ {lucro_total_lote:.2f}")
     with col_est2:
         st.metric(label="Faturamento Total", value=f"R$ {faturamento_potencial:.2f}")
-        st.metric(label="Lucro Líquido do Lote", value=f"R$ {lucro_total_lote:.2f}", delta=f"{margem_lucro_real_pct:.1f}% Margem")
+        st.metric(label="Investimento Fornecedor", value=f"R$ {capital_investido_fornecedor:.2f}")
+
+    # Painel de Ponto de Equilíbrio (Break-even)
+    st.subheader("🎯 Ponto de Equilíbrio")
+    if pecas_break_even > 0:
+        if pecas_break_even <= qtd_estoque:
+            st.info(
+                f"Você precisa vender **{pecas_break_even} de {qtd_estoque} peças** "
+                f"para pagar o investimento de compra do lote (R$ {custo_total_lote:.2f}).\n\n"
+                f"A partir da **{pecas_break_even + 1}ª peça**, o lucro passa a ser 100% livre!"
+            )
+        else:
+            st.error(
+                f"⚠️ **Atenção:** Seria necessário vender **{pecas_break_even} peças**, "
+                f"mas seu lote só possui **{qtd_estoque}**. Você terá prejuízo neste preço! "
+                f"Aumente o preço ou negocie o custo com o fornecedor."
+            )
+    else:
+        st.error("⚠️ **Preço Inviável:** O preço cobrado não cobre as taxas básicas de venda. Ajuste o valor.")
