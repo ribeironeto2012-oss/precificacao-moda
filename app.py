@@ -88,7 +88,12 @@ with col4:
     taxa_cartao = st.number_input("Cartão (%)", min_value=0.0, max_value=100.0, value=7.99, step=0.1) / 100
 
 st.subheader("Venda Praticada")
-preco_praticado = st.number_input("Preço Final Alvo (R$)", min_value=0.1, value=119.90, step=5.0)
+col5, col6 = st.columns(2)
+with col5:
+    preco_praticado = st.number_input("Preço Alvo (R$)", min_value=0.1, value=119.90, step=5.0)
+with col6:
+    # Novo campo para o simulador de descontos
+    desconto_pct = st.number_input("Desconto Cliente (%)", min_value=0.0, max_value=100.0, value=0.0, step=1.0)
 
 
 # --- CÁLCULOS INTERNOS ---
@@ -120,15 +125,17 @@ custo_total_lote = (custo_fornecedor + custo_frete) * qtd_estoque
 faturamento_potencial = preco_praticado * qtd_estoque
 lucro_total_lote = lucro_liquido_real * qtd_estoque
 
-# 7. NOVO: Cálculo de Ponto de Equilíbrio (Break-even)
-# Quanto sobra de dinheiro em caixa após deduzir as taxas e a embalagem da venda
+# 7. Cálculo de Ponto de Equilíbrio (Break-even)
 receita_liquida_un = preco_praticado * (1 - soma_taxas_variaveis) - custo_embalagem
-
 if receita_liquida_un > 0:
-    # Divisão do custo de compra do lote pelo retorno real da venda
     pecas_break_even = math.ceil(custo_total_lote / receita_liquida_un)
 else:
     pecas_break_even = 0
+
+# 8. NOVO: Cálculos do Simulador de Desconto
+preco_com_desconto = preco_praticado * (1 - desconto_pct / 100)
+lucro_liquido_desconto = preco_com_desconto - (preco_com_desconto * soma_taxas_variaveis) - custo_total_real
+margem_lucro_desconto_pct = (lucro_liquido_desconto / preco_com_desconto) * 100 if preco_com_desconto > 0 else 0
 
 
 # --- EXIBIÇÃO DOS RESULTADOS ---
@@ -154,17 +161,34 @@ st.markdown(f"""
             <span>{margem_lucro_real_pct:.1f}%</span>
         </div>
         <div class="result-highlight">
-            <span>LUCRO LÍQUIDO REAL/PEÇA:</span>
+            <span>LUCRO LÍQUIDO/PEÇA:</span>
             <span>R$ {lucro_liquido_real:.2f}</span>
         </div>
     </div>
 """, unsafe_allow_html=True)
 
-# Alertas de Markup
-if markup_aplicado < 2.0:
-    st.warning(f"⚠️ **Atenção:** Markup de {markup_aplicado:.2f}x está abaixo de 2.0x. Margem perigosa para o varejo de moda.")
+# Lógica condicional para exibir o simulador de descontos
+if desconto_pct > 0:
+    st.subheader("💸 Impacto do Desconto")
+    col_desc1, col_desc2 = st.columns(2)
+    with col_desc1:
+        st.metric(label="Novo Preço Cliente", value=f"R$ {preco_com_desconto:.2f}")
+    with col_desc2:
+        st.metric(label="Novo Lucro Líquido", value=f"R$ {lucro_liquido_desconto:.2f}", delta=f"{margem_lucro_desconto_pct:.1f}% Margem Real")
+
+    # Alertas dinâmicos baseados no desconto
+    if lucro_liquido_desconto < 0:
+        st.error("🚨 **PREJUÍZO:** Você está pagando para o cliente levar a peça! O desconto engoliu o seu lucro.")
+    elif margem_lucro_desconto_pct < 10:
+        st.warning("⚠️ **Atenção:** Venda quase empatando. A margem caiu para menos de 10%.")
+    else:
+        st.success("✅ **Lucrativo:** Mesmo com desconto, a venda mantém uma margem saudável.")
 else:
-    st.success(f"✅ **Saudável:** Markup de {markup_aplicado:.2f}x está excelente para o varejo.")
+    # Se não houver desconto, mostra os alertas de Markup originais
+    if markup_aplicado < 2.0:
+        st.warning(f"⚠️ **Atenção:** Markup de {markup_aplicado:.2f}x está abaixo de 2.0x. Margem perigosa.")
+    else:
+        st.success(f"✅ **Saudável:** Markup de {markup_aplicado:.2f}x está excelente para o varejo.")
 
 # --- CARD VISUAL DO LOTE ---
 if qtd_estoque > 0:
