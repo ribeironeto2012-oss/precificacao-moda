@@ -68,21 +68,23 @@ st.title("👕 Precificação Rápida")
 st.caption("Moda Masculina • Versão Mobile")
 
 # --- ENTRADA DE DADOS ---
+# Custos estritamente de aquisição física da peça
 st.subheader("Custos de Aquisição")
 col1, col2 = st.columns(2)
 with col1:
     custo_fornecedor = st.number_input("Fornecedor (R$)", min_value=0.0, value=45.00, step=1.0)
-    custo_embalagem = st.number_input("Embalagem (R$)", min_value=0.0, value=4.00, step=0.5)
 with col2:
     custo_frete = st.number_input("Frete/Peça (R$)", min_value=0.0, value=3.50, step=0.5)
-    custo_fixo = st.number_input("Custo Fixo (R$)", min_value=0.0, value=14.33, step=1.0)
 
+# Embalagem, custos operacionais e impostos agrupados juntos
 st.subheader("Taxas e Deduções")
 col3, col4 = st.columns(2)
 with col3:
+    custo_embalagem = st.number_input("Embalagem (R$)", min_value=0.0, value=4.00, step=0.5)
     imposto = st.number_input("Imposto (%)", min_value=0.0, max_value=100.0, value=4.0, step=0.5) / 100
     margem_troca = st.number_input("Trocas (%)", min_value=0.0, max_value=100.0, value=2.0, step=0.5) / 100
 with col4:
+    custo_fixo = st.number_input("Custo Fixo (R$)", min_value=0.0, value=14.33, step=1.0)
     taxa_cartao = st.number_input("Cartão (%)", min_value=0.0, max_value=100.0, value=7.99, step=0.1) / 100
 
 st.subheader("Venda Praticada")
@@ -94,14 +96,13 @@ qtd_estoque = st.number_input("Qtd de Peças", min_value=0, value=10, step=5)
 
 
 # --- CÁLCULOS INTERNOS ---
-# 1. Custo Total Real
+# 1. Custo Total Real (Mantém a lógica matemática intocada)
 custo_total_real = custo_fornecedor + custo_frete + custo_embalagem + custo_fixo
 
 # 2. Preço Mínimo Recomendado (Margem de Contribuição desejada de 40%)
 margem_padrao_desejada = 0.40
 divisor = 1 - imposto - taxa_cartao - margem_troca - margem_padrao_desejada
 
-# Evita divisão por zero ou preço infinito se as taxas forem altas demais
 if divisor > 0:
     preco_sugerido = custo_total_real / divisor
 else:
@@ -127,7 +128,7 @@ lucro_total_lote = lucro_liquido_real * qtd_estoque
 # --- EXIBIÇÃO DOS RESULTADOS ---
 st.subheader("Análise Financeira")
 
-# Card Customizado HTML/CSS - CORRIGIDO AQUI TAMBÉM
+# Card Customizado HTML/CSS
 st.markdown(f"""
     <div class="result-card">
         <div class="result-row">
