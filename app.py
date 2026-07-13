@@ -14,8 +14,8 @@ st.markdown("""
     <style>
     /* Ajustes gerais para mobile */
     .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
     }
@@ -24,10 +24,10 @@ st.markdown("""
     .result-card {
         background-color: #f8f9fa;
         border-radius: 12px;
-        padding: 16px;
+        padding: 14px;
         border: 1px solid #e9ecef;
-        margin-top: 15px;
-        margin-bottom: 15px;
+        margin-top: 10px;
+        margin-bottom: 10px;
     }
     
     /* Tema escuro do Streamlit (caso ativo) */
@@ -41,17 +41,17 @@ st.markdown("""
     .result-row {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 14px;
+        margin-bottom: 6px;
+        font-size: 13px;
     }
     
     .result-highlight {
         display: flex;
         justify-content: space-between;
-        margin-top: 12px;
-        padding-top: 12px;
+        margin-top: 10px;
+        padding-top: 10px;
         border-top: 2px dashed #dee2e6;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: bold;
         color: #2e7d32;
     }
@@ -62,38 +62,48 @@ st.markdown("""
             color: #4caf50;
         }
     }
+    
+    /* Ajuste fino de margem entre os inputs para telas pequenas */
+    div[data-testid="column"] {
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("👕 Precificação Rápida")
-st.caption("Moda Masculina • Versão Mobile")
 
 # --- ENTRADA DE DADOS ---
+
+# 1. Custos de Aquisição (3 colunas lado a lado)
 st.subheader("Custos de Aquisição")
-col1, col2 = st.columns(2)
-with col1:
-    custo_fornecedor = st.number_input("Fornecedor (R$)", min_value=0.0, value=45.00, step=1.0)
-    qtd_estoque = st.number_input("Qtd de Peças", min_value=1, value=10, step=5)
-with col2:
-    custo_frete = st.number_input("Frete/Peça (R$)", min_value=0.0, value=3.50, step=0.5)
+col_aq1, col_aq2, col_aq3 = st.columns(3)
+with col_aq1:
+    custo_fornecedor = st.number_input("Fornecedor", min_value=0.0, value=45.00, step=1.0)
+with col_aq2:
+    custo_frete = st.number_input("Frete/Peça", min_value=0.0, value=3.50, step=0.5)
+with col_aq3:
+    qtd_estoque = st.number_input("Qtd Lote", min_value=1, value=10, step=5)
 
+# 2. Taxas e Deduções (Grid ultra compacto 3x2)
 st.subheader("Taxas e Deduções")
-col3, col4 = st.columns(2)
-with col3:
-    custo_embalagem = st.number_input("Embalagem (R$)", min_value=0.0, value=4.00, step=0.5)
-    imposto = st.number_input("Imposto (%)", min_value=0.0, max_value=100.0, value=4.0, step=0.5) / 100
-    margem_troca = st.number_input("Trocas (%)", min_value=0.0, max_value=100.0, value=2.0, step=0.5) / 100
-with col4:
-    custo_fixo = st.number_input("Custo Fixo (R$)", min_value=0.0, value=14.33, step=1.0)
-    taxa_cartao = st.number_input("Cartão (%)", min_value=0.0, max_value=100.0, value=7.99, step=0.1) / 100
+col_tx1, col_tx2, col_tx3 = st.columns(3)
+with col_tx1:
+    custo_embalagem = st.number_input("Embalagem", min_value=0.0, value=4.00, step=0.5)
+    imposto = st.number_input("Imposto %", min_value=0.0, max_value=100.0, value=4.0, step=0.5) / 100
+with col_tx2:
+    custo_fixo = st.number_input("Custo Fixo", min_value=0.0, value=14.33, step=1.0)
+    margem_troca = st.number_input("Trocas %", min_value=0.0, max_value=100.0, value=2.0, step=0.5) / 100
+with col_tx3:
+    taxa_cartao = st.number_input("Cartão %", min_value=0.0, max_value=100.0, value=7.99, step=0.1) / 100
 
+# 3. Venda e Desconto (2 colunas lado a lado)
 st.subheader("Venda Praticada")
-col5, col6 = st.columns(2)
-with col5:
-    preco_praticado = st.number_input("Preço Alvo (R$)", min_value=0.1, value=119.90, step=5.0)
-with col6:
-    # Novo campo para o simulador de descontos
-    desconto_pct = st.number_input("Desconto Cliente (%)", min_value=0.0, max_value=100.0, value=0.0, step=1.0)
+col_vd1, col_vd2 = st.columns(2)
+with col_vd1:
+    preco_praticado = st.number_input("Preço Alvo", min_value=0.1, value=119.90, step=5.0)
+with col_vd2:
+    desconto_pct = st.number_input("Desconto %", min_value=0.0, max_value=100.0, value=0.0, step=1.0)
 
 
 # --- CÁLCULOS INTERNOS ---
@@ -132,7 +142,7 @@ if receita_liquida_un > 0:
 else:
     pecas_break_even = 0
 
-# 8. NOVO: Cálculos do Simulador de Desconto
+# 8. Cálculos do Simulador de Desconto
 preco_com_desconto = preco_praticado * (1 - desconto_pct / 100)
 lucro_liquido_desconto = preco_com_desconto - (preco_com_desconto * soma_taxas_variaveis) - custo_total_real
 margem_lucro_desconto_pct = (lucro_liquido_desconto / preco_com_desconto) * 100 if preco_com_desconto > 0 else 0
@@ -167,55 +177,51 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# Lógica condicional para exibir o simulador de descontos
+# Alertas de Markup / Desconto
 if desconto_pct > 0:
     st.subheader("💸 Impacto do Desconto")
     col_desc1, col_desc2 = st.columns(2)
     with col_desc1:
-        st.metric(label="Novo Preço Cliente", value=f"R$ {preco_com_desconto:.2f}")
+        st.metric(label="Novo Preço", value=f"R$ {preco_com_desconto:.2f}")
     with col_desc2:
-        st.metric(label="Novo Lucro Líquido", value=f"R$ {lucro_liquido_desconto:.2f}", delta=f"{margem_lucro_desconto_pct:.1f}% Margem Real")
+        st.metric(label="Novo Lucro", value=f"R$ {lucro_liquido_desconto:.2f}", delta=f"{margem_lucro_desconto_pct:.1f}% Margem")
 
-    # Alertas dinâmicos baseados no desconto
     if lucro_liquido_desconto < 0:
-        st.error("🚨 **PREJUÍZO:** Você está pagando para o cliente levar a peça! O desconto engoliu o seu lucro.")
+        st.error("🚨 **PREJUÍZO:** O desconto engoliu todo o seu lucro.")
     elif margem_lucro_desconto_pct < 10:
-        st.warning("⚠️ **Atenção:** Venda quase empatando. A margem caiu para menos de 10%.")
+        st.warning("⚠️ **Atenção:** Margem muito baixa (menor que 10%).")
     else:
-        st.success("✅ **Lucrativo:** Mesmo com desconto, a venda mantém uma margem saudável.")
+        st.success("✅ **Lucrativo:** Desconto dentro do limite seguro.")
 else:
-    # Se não houver desconto, mostra os alertas de Markup originais
     if markup_aplicado < 2.0:
-        st.warning(f"⚠️ **Atenção:** Markup de {markup_aplicado:.2f}x está abaixo de 2.0x. Margem perigosa.")
+        st.warning(f"⚠️ **Atenção:** Markup de {markup_aplicado:.2f}x está abaixo de 2.0x.")
     else:
-        st.success(f"✅ **Saudável:** Markup de {markup_aplicado:.2f}x está excelente para o varejo.")
+        st.success(f"✅ **Saudável:** Markup de {markup_aplicado:.2f}x excelente.")
 
 # --- CARD VISUAL DO LOTE ---
 if qtd_estoque > 0:
-    st.subheader("📊 Projeção do Lote Inteiro")
+    st.subheader("📊 Projeção do Lote")
     
     col_est1, col_est2 = st.columns(2)
     with col_est1:
-        st.metric(label="Custo Direto do Lote", value=f"R$ {custo_total_lote:.2f}")
-        st.metric(label="Lucro Líquido do Lote", value=f"R$ {lucro_total_lote:.2f}")
+        st.metric(label="Custo Lote", value=f"R$ {custo_total_lote:.2f}")
+        st.metric(label="Lucro Lote", value=f"R$ {lucro_total_lote:.2f}")
     with col_est2:
-        st.metric(label="Faturamento Total", value=f"R$ {faturamento_potencial:.2f}")
-        st.metric(label="Investimento Fornecedor", value=f"R$ {capital_investido_fornecedor:.2f}")
+        st.metric(label="Faturamento", value=f"R$ {faturamento_potencial:.2f}")
+        st.metric(label="Inves. Fornecedor", value=f"R$ {capital_investido_fornecedor:.2f}")
 
     # Painel de Ponto de Equilíbrio (Break-even)
     st.subheader("🎯 Ponto de Equilíbrio")
     if pecas_break_even > 0:
         if pecas_break_even <= qtd_estoque:
             st.info(
-                f"Você precisa vender **{pecas_break_even} de {qtd_estoque} peças** "
-                f"para pagar o investimento de compra do lote (R$ {custo_total_lote:.2f}).\n\n"
-                f"A partir da **{pecas_break_even + 1}ª peça**, o lucro passa a ser 100% livre!"
+                f"Venda **{pecas_break_even} de {qtd_estoque} peças** para cobrir o custo (R$ {custo_total_lote:.2f}). "
+                f"A partir da **{pecas_break_even + 1}ª**, o lucro é 100% livre!"
             )
         else:
             st.error(
-                f"⚠️ **Atenção:** Seria necessário vender **{pecas_break_even} peças**, "
-                f"mas seu lote só possui **{qtd_estoque}**. Você terá prejuízo neste preço! "
-                f"Aumente o preço ou negocie o custo com o fornecedor."
+                f"⚠️ **Atenção:** Necessário vender **{pecas_break_even} peças**, mas o lote só tem **{qtd_estoque}**. "
+                f"Ajuste os valores para não fechar no prejuízo!"
             )
     else:
-        st.error("⚠️ **Preço Inviável:** O preço cobrado não cobre as taxas básicas de venda. Ajuste o valor.")
+        st.error("⚠️ **Preço Inviável:** O valor praticado não cobre nem as taxas de venda.")
