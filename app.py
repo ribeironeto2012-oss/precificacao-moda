@@ -112,7 +112,7 @@ soma_taxas_variaveis = imposto + taxa_cartao + margem_troca
 lucro_liquido_real = preco_praticado - (preco_praticado * soma_taxas_variaveis) - custo_total_real
 
 # 4. Margem de Lucro Real %
-margem_lucro_real_pct = (lucro_liquido_real / preco_praticado) * 100
+margem_lucro_real_pct = (lucro_liquido_real / preco_praticado) * 100 if preco_praticado > 0 else 0
 
 # 5. Markup Aplicado
 markup_aplicado = preco_praticado / custo_total_real if custo_total_real > 0 else 0
@@ -127,7 +127,7 @@ lucro_total_lote = lucro_liquido_real * qtd_estoque
 # --- EXIBIÇÃO DOS RESULTADOS ---
 st.subheader("Análise Financeira")
 
-# Card Customizado HTML/CSS
+# Card Customizado HTML/CSS - CORRIGIDO AQUI TAMBÉM
 st.markdown(f"""
     <div class="result-card">
         <div class="result-row">
@@ -151,7 +151,7 @@ st.markdown(f"""
             <span>R$ {lucro_liquido_real:.2f}</span>
         </div>
     </div>
-""", unsafe_with_html=True)
+""", unsafe_allow_html=True)
 
 # Alertas de Markup
 if markup_aplicado < 2.0:
