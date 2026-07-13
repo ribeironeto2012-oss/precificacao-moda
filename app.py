@@ -68,15 +68,16 @@ st.title("👕 Precificação Rápida")
 st.caption("Moda Masculina • Versão Mobile")
 
 # --- ENTRADA DE DADOS ---
-# Custos estritamente de aquisição física da peça
+# Custos de aquisição física + quantidade integrados no topo
 st.subheader("Custos de Aquisição")
 col1, col2 = st.columns(2)
 with col1:
     custo_fornecedor = st.number_input("Fornecedor (R$)", min_value=0.0, value=45.00, step=1.0)
+    qtd_estoque = st.number_input("Qtd de Peças", min_value=0, value=10, step=5)
 with col2:
     custo_frete = st.number_input("Frete/Peça (R$)", min_value=0.0, value=3.50, step=0.5)
 
-# Embalagem, custos operacionais e impostos agrupados juntos
+# Embalagem, custos operacionais e tributos
 st.subheader("Taxas e Deduções")
 col3, col4 = st.columns(2)
 with col3:
@@ -90,16 +91,12 @@ with col4:
 st.subheader("Venda Praticada")
 preco_praticado = st.number_input("Preço Final Alvo (R$)", min_value=0.1, value=119.90, step=5.0)
 
-# --- GERENCIAMENTO DE ESTOQUE ---
-st.subheader("📦 Estoque do Lote")
-qtd_estoque = st.number_input("Qtd de Peças", min_value=0, value=10, step=5)
-
 
 # --- CÁLCULOS INTERNOS ---
-# 1. Custo Total Real (Mantém a lógica matemática intocada)
+# 1. Custo Total Real por Peça
 custo_total_real = custo_fornecedor + custo_frete + custo_embalagem + custo_fixo
 
-# 2. Preço Mínimo Recomendado (Margem de Contribuição desejada de 40%)
+# 2. Preço Mínimo Recomendado (Margem de Contribuição de 40%)
 margem_padrao_desejada = 0.40
 divisor = 1 - imposto - taxa_cartao - margem_troca - margem_padrao_desejada
 
@@ -108,7 +105,7 @@ if divisor > 0:
 else:
     preco_sugerido = custo_total_real / 0.1
 
-# 3. Lucro Líquido Real
+# 3. Lucro Líquido Real Unitário
 soma_taxas_variaveis = imposto + taxa_cartao + margem_troca
 lucro_liquido_real = preco_praticado - (preco_praticado * soma_taxas_variaveis) - custo_total_real
 
@@ -118,9 +115,10 @@ margem_lucro_real_pct = (lucro_liquido_real / preco_praticado) * 100 if preco_pr
 # 5. Markup Aplicado
 markup_aplicado = preco_praticado / custo_total_real if custo_total_real > 0 else 0
 
-# 6. Cálculos do Estoque
+# 6. NOVO: Cálculos de Estoque Alterados conforme solicitação
 capital_investido_fornecedor = custo_fornecedor * qtd_estoque
-custo_total_lote = custo_total_real * qtd_estoque
+# Nova regra matemática: (Fornecedor + Frete) * Quantidade
+custo_total_lote = (custo_fornecedor + custo_frete) * qtd_estoque
 faturamento_potencial = preco_praticado * qtd_estoque
 lucro_total_lote = lucro_liquido_real * qtd_estoque
 
@@ -167,7 +165,7 @@ if qtd_estoque > 0:
     col_est1, col_est2 = st.columns(2)
     with col_est1:
         st.metric(label="Investimento Fornecedor", value=f"R$ {capital_investido_fornecedor:.2f}")
-        st.metric(label="Custo Total do Lote", value=f"R$ {custo_total_lote:.2f}")
+        st.metric(label="Custo Direto do Lote", value=f"R$ {custo_total_lote:.2f}")
     with col_est2:
         st.metric(label="Faturamento Total", value=f"R$ {faturamento_potencial:.2f}")
         st.metric(label="Lucro Líquido do Lote", value=f"R$ {lucro_total_lote:.2f}", delta=f"{margem_lucro_real_pct:.1f}% Margem")
